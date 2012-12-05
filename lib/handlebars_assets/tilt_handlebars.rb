@@ -23,15 +23,15 @@ module HandlebarsAssets
       if template_path.is_partial?
         <<-PARTIAL
           (function() {
-            Handlebars.registerPartial(#{template_path.name}, Handlebars.template(#{compiled_hbs}));
+            Handlebars.registerPartial(#{template_path.name_without_path}, Handlebars.template(#{compiled_hbs}));
           }).call(this);
         PARTIAL
       else
         <<-TEMPLATE
           (function() {
             this.#{template_namespace} || (this.#{template_namespace} = {});
-            this.#{template_namespace}[#{template_path.name}] = Handlebars.template(#{compiled_hbs});
-            return this.#{template_namespace}[#{template_path.name}];
+            this.#{template_namespace}[#{template_path.name_without_path}] = Handlebars.template(#{compiled_hbs});
+            return this.#{template_namespace}[#{template_path.name_without_path}];
           }).call(this);
         TEMPLATE
       end
@@ -62,7 +62,16 @@ module HandlebarsAssets
       end
 
       def name
-        is_partial? ? partial_name : template_name
+        name = is_partial? ? partial_name : template_name
+        name.dump
+      end
+
+      def name_without_path
+        name = is_partial? ? partial_name : template_name
+        if name.include?('/')
+          name = name.split('/').last
+        end
+        name.dump
       end
 
       private
@@ -78,11 +87,11 @@ module HandlebarsAssets
       end
 
       def partial_name
-        forced_underscore_name.gsub(/\//, '_').gsub(/__/, '_').dump
+        forced_underscore_name.gsub(/\//, '_').gsub(/__/, '_')
       end
 
       def template_name
-        relative_path.dump
+        relative_path
       end
     end
   end
